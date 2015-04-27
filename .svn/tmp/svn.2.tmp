@@ -1,0 +1,84 @@
+/**
+ * 
+ */
+package cl.webcursos.salas.client;
+
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.ToggleButton;
+
+/**
+ * @author Francisco García
+ *
+ */
+public class SalasButton extends ToggleButton {
+
+	private int nombreSala;
+	private int nombreModulo;
+	private boolean sobreescribir = false;
+	private boolean ocupado = false;
+	private PopupPanel popup = null;
+
+	/**
+	 * @param upText
+	 * @param downText
+	 * @param handler
+	 */
+	public SalasButton(int sala,int modulo, boolean ocupa, boolean sobree, String upText, String downText, ClickHandler handler) {
+		super(upText, downText, handler);
+		this.nombreSala = sala;
+		this.nombreModulo = modulo;
+		this.sobreescribir = sobree;
+		this.ocupado = ocupa;
+		
+		
+		
+		this.popup = new PopupPanel(true);
+		this.popup.setWidget(new HTML("<div>Modulo: "+modulo+"<br>(08:00-09:15)<br><br> Sala:"+sala+"</div>"));
+		
+		this.addMouseOverHandler(new MouseOverHandler() {			
+			@Override
+			public void onMouseOver(MouseOverEvent event) {
+				popup.setPopupPosition(getAbsoluteLeft(), getAbsoluteTop() + getOffsetHeight());
+				popup.show();
+			}
+		});
+		
+		this.addMouseOutHandler(new MouseOutHandler() {			
+			@Override
+			public void onMouseOut(MouseOutEvent event) {
+				popup.hide();
+			}
+		});
+	
+		if(!this.ocupado){
+			this.setStylePrimaryName("Boton-disponible");
+		} else {
+			this.setStylePrimaryName("Boton-ocupado");
+			if(!this.sobreescribir) {
+				this.setEnabled(false);
+			}
+		}
+	
+	}
+
+	public int getSala() {
+		return this.nombreSala;
+	}
+	public int getModulo() {
+		return this.nombreModulo;
+	}
+
+	@Override
+	protected void onLoad() {
+		super.onLoad();
+		
+		this.popup.setPopupPosition(this.getAbsoluteLeft(), this.getAbsoluteTop());
+	}
+
+}
