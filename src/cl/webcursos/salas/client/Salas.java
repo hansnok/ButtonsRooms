@@ -392,7 +392,6 @@ public class Salas implements EntryPoint{
 			public void onSubmit(SubmitEvent event) {
 				// This event is fired just before the form is submitted. 
 				// We can take this opportunity to perform validation.
-
 				if(eventName.getText().length() == 0 || eventName.getText().equals(eventNameTxt)) {
 					Window.alert("Debe escribir un  nombre de evento.");
 					eventName.setStylePrimaryName("Text-Box-vacio");
@@ -419,113 +418,105 @@ public class Salas implements EntryPoint{
 				}else{
 					emailForm.setStylePrimaryName("Text-Box");
 
-				}	
+				}
+				
+				if(!event.isCanceled()){
+					Window.alert("validacion lista??");
+					int rows = getAllButtonsDown(matrixButtons).size() + 1;								
+					resultPanelBookings = new VerticalPanel(); 
+					resultPanelBookings.setSpacing(4); 
+
+					final Grid dataTable = new Grid(rows, 5); 
+					// Header data table
+					dataTable.setText(0,0,"Nombre sala");
+					dataTable.setText(0,1,"Módulo");
+					dataTable.setText(0,2,"Hora inicio");
+					dataTable.setText(0,3,"Hora término");
+					dataTable.setText(0,4,"Estado");
+					dataTable.setBorderWidth(1);
+					
+					List<Map<String, String>> values = getAllButtonsDown(matrixButtons);							
+					String sala = "inicio";
+					String modulo ="inicio";
+					String nombreSalas="inicio";
+					String nombreModulo="inicio";
+					String  inicio="inicio";
+					String  termino="inicio";
+					for(Map<String, String> Disp : values) {
+						sala= sala+","+Disp.get("idSala");
+						modulo= modulo+","+Disp.get("idModulo");
+						nombreSalas=nombreSalas+","+Disp.get("nombreSala");
+						nombreModulo=nombreModulo+","+Disp.get("nombreModulo");
+						inicio=inicio+","+Disp.get("inicio");
+						termino=termino+","+Disp.get("termino");
+					}
+						counter = 1;		
+						String param = "&inicio="+inicio+"&termino="+termino+"&nombremodulo="+nombreModulo+"&nombresala="+nombreSalas+"&moduleid="+modulo+"&room="+sala+"&date="+initialDate+"&name="+eventName.getValue()+"&asistentes="+attendeesAmount.getValue()+"&multiply="+advOptions+"&finalDate="+endDate+"&days="+selectDays+"&frequency="+weeklyFrequencyBookings;								
+						AjaxRequest.ajaxRequest("action=submission"+param, new AsyncCallback<AjaxData>() {
+							@Override
+							public void onSuccess(AjaxData result) {
+								Map<String, String> values = AjaxRequest.getValueFromResult(result);
+								
+								
+								List<Map<String, String>> valuesvaluesSatisfactoryBookingsReservas = AjaxRequest.getValuesFromResultString(values.get("well"));
+								List<Map<String, String>> valuesErroneousBookings = AjaxRequest.getValuesFromResultString(values.get("errors"));
+								
+								for(Map<String, String> bookings : valuesvaluesSatisfactoryBookingsReservas) {	
+									dataTable.setText(counter,0,bookings.get("nombresala"));
+									dataTable.setText(counter,1,bookings.get("nombremodulo"));
+									dataTable.setText(counter,2,bookings.get("inicio"));
+									dataTable.setText(counter,3,bookings.get("termino"));
+									dataTable.setText(counter,4,"OK");
+									counter++;
+								}
+								
+								for(Map<String, String> bookings : valuesErroneousBookings) {	
+									dataTable.setText(counter,0,bookings.get("nombresala"));
+									dataTable.setText(counter,1,bookings.get("nombremodulo"));
+									dataTable.setText(counter,2,bookings.get("inicio"));
+									dataTable.setText(counter,3,bookings.get("termino"));
+									dataTable.setText(counter,4,"Error");
+									counter++;																								
+								}										
+							}
+							
+							public void onFailure(Throwable caught) {
+								System.out.println("Callback error");
+							}
+						});
+						
+					Date dateInfo = new Date(initialDate * 1000L); // *1000 is to convert seconds to milliseconds
+					Date dateEndInfo = new Date(endDate * 1000L); // *1000 is to convert seconds to milliseconds
+					DateTimeFormat fmt = DateTimeFormat.getFormat("d/M/yyyy");
+
+					Grid info = new Grid(7, 2);
+					info.setBorderWidth(0);
+					info.setText(0,0,"Nombre del evento:");
+					info.setText(0,1,eventName.getValue());
+					info.setText(1,0,"Fecha inicio:");
+					info.setText(1,1,fmt.format(dateInfo));
+					info.setText(2,0,"Fecha término:");
+					info.setText(2,1,fmt.format(dateEndInfo));
+					info.setText(3,0,"Frecuencia:");
+					info.setText(3,1,"Cada "+weeklyFrequencyBookings+" semana(s)");
+					info.setText(4,0,"N° de asistentes:");
+					info.setText(4,1,attendeesAmount.getValue());
+					info.setText(5,0,"Responsable");
+					info.setText(5,1,userName+" "+userLastName);
+					info.setText(6,0,"Correo responsable:");
+					info.setText(6,1,userEmail);
+
+					resultPanelBookings.add(info);
+					resultPanelBookings.add(dataTable);
+					matrixButtons.setVisible(false);
+					decoratordecoratorPanelFormPanel.setVisible(false);
+					RootPanel.get(buttonsRoomsDivId).add(resultPanelBookings);
+				}
 			}	
 			
 		});
-		
-		form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
-			@Override
-			public void onSubmitComplete(SubmitCompleteEvent event) {
-				Window.alert(event.getResults());
-				Window.alert("cargo submit");
-						int rows = getAllButtonsDown(matrixButtons).size() + 1;								
-						resultPanelBookings = new VerticalPanel(); 
-						resultPanelBookings.setSpacing(4); 
-
-						final Grid dataTable = new Grid(rows, 5); 
-						// Header data table
-						dataTable.setText(0,0,"Nombre sala");
-						dataTable.setText(0,1,"Módulo");
-						dataTable.setText(0,2,"Hora inicio");
-						dataTable.setText(0,3,"Hora término");
-						dataTable.setText(0,4,"Estado");
-						dataTable.setBorderWidth(1);
-						
-						List<Map<String, String>> values = getAllButtonsDown(matrixButtons);							
-						String sala = "inicio";
-						String modulo ="inicio";
-						String nombreSalas="inicio";
-						String nombreModulo="inicio";
-						String  inicio="inicio";
-						String  termino="inicio";
-						for(Map<String, String> Disp : values) {
-							sala= sala+","+Disp.get("idSala");
-							modulo= modulo+","+Disp.get("idModulo");
-							nombreSalas=nombreSalas+","+Disp.get("nombreSala");
-							nombreModulo=nombreModulo+","+Disp.get("nombreModulo");
-							inicio=inicio+","+Disp.get("inicio");
-							termino=termino+","+Disp.get("termino");
-						}
-							counter = 1;		
-							String param = "&inicio="+inicio+"&termino="+termino+"&nombremodulo="+nombreModulo+"&nombresala="+nombreSalas+"&moduleid="+modulo+"&room="+sala+"&date="+initialDate+"&name="+eventName.getValue()+"&asistentes="+attendeesAmount.getValue()+"&multiply="+advOptions+"&finalDate="+endDate+"&days="+selectDays+"&frequency="+weeklyFrequencyBookings;								
-							AjaxRequest.ajaxRequest("action=submission"+param, new AsyncCallback<AjaxData>() {
-								@Override
-								public void onSuccess(AjaxData result) {
-									Map<String, String> values = AjaxRequest.getValueFromResult(result);
-									
-									
-									List<Map<String, String>> valuesvaluesSatisfactoryBookingsReservas = AjaxRequest.getValuesFromResultString(values.get("well"));
-									List<Map<String, String>> valuesErroneousBookings = AjaxRequest.getValuesFromResultString(values.get("errors"));
-									
-									for(Map<String, String> bookings : valuesvaluesSatisfactoryBookingsReservas) {	
-										dataTable.setText(counter,0,bookings.get("nombresala"));
-										dataTable.setText(counter,1,bookings.get("nombremodulo"));
-										dataTable.setText(counter,2,bookings.get("inicio"));
-										dataTable.setText(counter,3,bookings.get("termino"));
-										dataTable.setText(counter,4,"OK");
-										counter++;
-									}
-									
-									for(Map<String, String> bookings : valuesErroneousBookings) {	
-										dataTable.setText(counter,0,bookings.get("nombresala"));
-										dataTable.setText(counter,1,bookings.get("nombremodulo"));
-										dataTable.setText(counter,2,bookings.get("inicio"));
-										dataTable.setText(counter,3,bookings.get("termino"));
-										dataTable.setText(counter,4,"Error");
-										counter++;																								
-									}										
-								}
-								
-								public void onFailure(Throwable caught) {
-									System.out.println("Callback error");
-								}
-							});
-							
-						Date dateInfo = new Date(initialDate * 1000L); // *1000 is to convert seconds to milliseconds
-						Date dateEndInfo = new Date(endDate * 1000L); // *1000 is to convert seconds to milliseconds
-						DateTimeFormat fmt = DateTimeFormat.getFormat("d/M/yyyy");
-
-						Grid info = new Grid(7, 2);
-						info.setBorderWidth(0);
-						info.setText(0,0,"Nombre del evento:");
-						info.setText(0,1,eventName.getValue());
-						info.setText(1,0,"Fecha inicio:");
-						info.setText(1,1,fmt.format(dateInfo));
-						info.setText(2,0,"Fecha término:");
-						info.setText(2,1,fmt.format(dateEndInfo));
-						info.setText(3,0,"Frecuencia:");
-						info.setText(3,1,"Cada "+weeklyFrequencyBookings+" semana(s)");
-						info.setText(4,0,"N° de asistentes:");
-						info.setText(4,1,attendeesAmount.getValue());
-						info.setText(5,0,"Responsable");
-						info.setText(5,1,userName+" "+userLastName);
-						info.setText(6,0,"Correo responsable:");
-						info.setText(6,1,userEmail);
-
-						resultPanelBookings.add(info);
-						resultPanelBookings.add(dataTable);
-						matrixButtons.setVisible(false);
-						decoratordecoratorPanelFormPanel.setVisible(false);
-						//RootPanel.get(buttonsRoomsDivId).clear();
-						RootPanel.get(buttonsRoomsDivId).add(resultPanelBookings);
-					
-			}		
-		});
-	
 	}
 	
-
 	private List<SalasButton> getButtons(SalasButton btn){
 		List<SalasButton> buttons = new ArrayList<SalasButton>();
 		VerticalPanel vpanel = (VerticalPanel) btn.getParent().getParent();
