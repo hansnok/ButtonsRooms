@@ -6,8 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cl.webcursos.salas.client.AjaxRequest;
+
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -19,176 +20,288 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 
-
-public class Salas implements EntryPoint {
-	public int contador = 1;
-
-
-	public String mensaje = "";
+public class Salas implements EntryPoint{
+	
+	/** Ajax url **/
+	private String moodleurl = null;
+	private String buttonsRoomsDivId = null;
+	
+	/** User information **/
+	private int isAdmin = -1;
+	private String userName = null;
+	private String userLastName = null;
+	private String userEmail = null;
+	
+	/** Auxiliary variable for controlling loading modules  **/
+	private boolean initiate = false;
+	
+	/**  **/
+	private VerticalPanel matrixButtons = null;
+	private HorizontalPanel firstRowButtons = null;
+	private HorizontalPanel rowButtons = null;
+	private FormPanel form = null;
+	private VerticalPanel formPanel = null;
+	private TextBox eventName = null;
+	private String eventNameTxt = null;
+	private TextBox attendeesAmount = null;
+	private String attendeesAmountTxt = null;
+	private TextBox emailForm = null;
+	private String emailFormTxt = null;
+	private VerticalPanel resultPanelBookings = null;
+	private DecoratorPanel decoratordecoratorPanelFormPanel = null;
+	
+	/** Variables extracted from the div **/
+	private int initialDate = -1;
+	// typeRoom = {1: class room, 2: study room, 3: reunion room}
+	private int typeRoom = -1;
+	private int idCampus = -1;
+	private int userDayReservations = -1;
+	private int userWeeklyBooking = -1;
+	private int maxDailyBookings = -1;
+	private int maxWeeklyBookings = -1;
+	private String size = null;
+	private int endDate = -1;
+	private String selectDays = null;
+	private int weeklyFrequencyBookings = -1;
+	private int advOptions = -1;
+	private int counter = -1;
 
 	public static native void console(String text)
 	/*-{
     console.log(text);
-}-*/;
+	}-*/;
 	public static <T extends JavaScriptObject> T parseJson(String jsonStr)
 	{
 		return JsonUtils.safeEval(jsonStr);
 	}
 
-
 	public void onModuleLoad() {
-		
 
-		//final String url=RootPanel.get("salas").getElement().getAttribute("moodleurl");
-		//final int type=Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("type"));
-		//final int date=Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("fecha"));
-		//final int campusid=Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("campus"));
-		//final String size=RootPanel.get("salas").getElement().getAttribute("size");
-		//final int multiply=Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("multiply"));
-		//final int finalDate=Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("finalDate"));
-		//final String days=RootPanel.get("salas").getElement().getAttribute("days");
-		//final int frequency=Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("frequency"));
-		//final int maxreservasenpantalla=Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("reservasdia"));
-		//final int maxreservasSemana=Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("reservassemana"));
-		//final int userreservasenpantalla = Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("userdailybooking"));
-		//final int userreservasSemana=Integer.parseInt(RootPanel.get("salas").getElement().getAttribute("userweeklybooking"));
+		// List of errors after trying to initialize
+		ArrayList<String> errors = new ArrayList<String>();
 		
-		//incluidos
-		final String url="http://localhost/moodlegit/local/reservasalas/ajax/data.php";
-		final int type=1;
-		final int date=1419303600;
-		final int campusid=1;
-		final String size = "1-25";
-		final int multiply = 0;
-		final int finalDate=1419908400;
-		final String days="LMWJVS";
-		final int frequency = 1;
-		final int maxreservasenpantalla = 2;//traigo cantidad de reservas en el dia
-		final int maxreservasSemana=6;
-		final int userreservasenpantalla = 0;//traigo cantidad de reservas en el dia
-		final int userreservasSemana=0;
-		final boolean admin =false;
+		buttonsRoomsDivId = "buttonsRooms";
+		if(RootPanel.get(buttonsRoomsDivId) == null) {
+			errors.add("Can not initalize. Buttons Rooms requires an existing DIV tag with id: buttonsRooms.");
+			Window.alert("GWT impossible initialize");
+			return;
+		}
 		
-		//no incluidos
+		if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("moodleurl") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("moodleurl").equals("")){
+			moodleurl = RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("moodleurl");
+		}else{
+			errors.add("Invalid Moodle ajax url");
+		}
+
+		try {
+			// Extract information from the div
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("initialDate") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("initialDate").equals("")) {
+				initialDate = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("initialDate")); 
+			}
+
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("typeRoom") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("typeRoom").equals("")) {
+				typeRoom = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("typeRoom"));
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("campus") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("campus").equals("")) {
+				idCampus = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("campus"));
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("userDayReservations") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("userDayReservations").equals("")) {
+				userDayReservations = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("userDayReservations"));
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("userWeeklyBooking") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("userWeeklyBooking").equals("")) {
+				userWeeklyBooking = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("userWeeklyBooking"));
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("maxDailyBookings") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("maxDailyBookings").equals("")) {
+				maxDailyBookings = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("maxDailyBookings"));
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("maxWeeklyBookings") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("maxWeeklyBookings").equals("")) {
+				maxWeeklyBookings = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("maxWeeklyBookings"));
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("size") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("size").equals("")) {
+				size = RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("size");
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("endDate") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("endDate").equals("")) {
+				endDate = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("endDate"));
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("selectDays") != null){
+				selectDays = RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("selectDays");
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("weeklyFrequencyBookings") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("weeklyFrequencyBookings").equals("")) {
+				weeklyFrequencyBookings = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("weeklyFrequencyBookings"));
+			}
+			
+			if(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("advOptions") != null && !RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("advOptions").equals("")) {
+				advOptions = Integer.parseInt(RootPanel.get(buttonsRoomsDivId).getElement().getAttribute("advOptions"));
+			}			
+			
+		} catch (Exception e) {
+			errors.add("Form error process, check that the input is correctly entered");
+		}
+
+		if(errors.size() > 0) {
+			Label errorsLabel = new Label();
+			String text = "";
+			for(int i=0; i<errors.size(); i++) {
+				text += "\n" + errors.get(i);
+			}
+			errorsLabel.setText(text);
+			errorsLabel.setTitle("Fatal error while initializing modules");
+
+			RootPanel.get(buttonsRoomsDivId).clear();
+			RootPanel.get(buttonsRoomsDivId).add(errorsLabel);
+		}else{
+			AjaxRequest.moodleUrl = moodleurl;
+			AjaxRequest.ajaxRequest("action=info", new AsyncCallback<AjaxData>() {
+				@Override
+				public void onFailure(Throwable caught) {
+					RootPanel.get(buttonsRoomsDivId).clear();
+					RootPanel.get(buttonsRoomsDivId).add(new HTML("Ajax query error: user data"));					
+				}
+				
+				@Override
+				public void onSuccess(AjaxData result) {
+					
+					Map<String, String> values = AjaxRequest.getValueFromResult(result);
+					
+					if(!result.getError().equals("")) {
+						Window.alert("Ajax query error: user data");
+						return;
+					}
+					// Check if the user is an administrator or not, 0 = false, 1 = true
+					isAdmin = Integer.parseInt(values.get("isAdmin"));
+					userName = values.get("firstname");
+					userLastName = values.get("lastname");
+					userEmail = values.get("email");	
+				}			
+			});
+			
+			loadInterface();				
+		}
+	}	
+	
+	private void loadInterface(){
 		
-		final boolean rev = false;
-		final boolean resources = false;
+		matrixButtons = new VerticalPanel(); 
+		matrixButtons.setSpacing(5); 
+		
 		final int capSobre= 0;//traigo si puede sobre escribir
 
-		//SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); // the format of your date
-		//sdf.setTimeZone(TimeZone.getTimeZone("GMT-4")); // give a timezone reference for formating (see comment at the bottom
-		//String formattedDate = sdf.format(date);
-		
-		
-		
-		final int totalreservashoy=maxreservasenpantalla-userreservasenpantalla;
-		final int totalreservassemana=maxreservasSemana-userreservasSemana;
-		final VerticalPanel vPanel = new VerticalPanel();
-		vPanel.setSpacing(5); 
-		AjaxRequest.moodleUrl = url;
-		String param= "&campusid="+campusid+"&type="+type+"&date="+date+"&rev="+rev+"&resources="+resources+"&multiply="+multiply+"&size="+size+"&finalDate="+finalDate+"&days="+days+"&frequency="+frequency;
+		final int availabilityBookingToday = maxDailyBookings - userDayReservations; 
+		final int availabilityBookingWeek = maxWeeklyBookings - userWeeklyBooking; 
+		String param= "&campusid="+idCampus+"&type="+typeRoom+"&date="+initialDate+"&multiply="+advOptions+"&size="+size+"&finalDate="+endDate+"&days="+selectDays+"&frequency="+weeklyFrequencyBookings;
 		AjaxRequest.ajaxRequest("action=getbooking"+ param, new AsyncCallback<AjaxData>() {
-			int anterior=0;
-			String anteriorS;
-			String primerId;
 			@Override
 			public void onSuccess(AjaxData result) {
-
+				
 				Map<String, String> values = AjaxRequest.getValueFromResult(result);
-				List<Map<String, String>> valuesModulos = AjaxRequest.getValuesFromResultString(values.get("Modulos"));
-				List<Map<String, String>> valuesSalas = AjaxRequest.getValuesFromResultString(values.get("Salas"));
-				HorizontalPanel hModulosPanel = new HorizontalPanel();
-				hModulosPanel.setSpacing(4);
-
-				HTML html = new HTML("<div style='hight: 10px; width: 53px;'></div>",true);
-				hModulosPanel.add(html);
-
-				for(Map<String, String> modules : valuesModulos) {							
-					ToggleButton toggleButton = new ToggleButton(modules.get("name"));
-					toggleButton.setEnabled(false);
-					toggleButton.setStylePrimaryName("Boton-marco");
-					hModulosPanel.add(toggleButton);
-
+				List<Map<String, String>> valuesModules = AjaxRequest.getValuesFromResultString(values.get("Modulos"));
+				List<Map<String, String>> valuesRooms = AjaxRequest.getValuesFromResultString(values.get("Salas"));
+				firstRowButtons = new HorizontalPanel(); 
+				firstRowButtons.setSpacing(4);
+				// White cell
+				HTML dieTip = new HTML("<div style='hight: 10px; width: 53px;'></div>",true);
+				firstRowButtons.add(dieTip);						
+				// Modules
+				for(Map<String, String> modules : valuesModules) {							
+					ToggleButton moduleButton = new ToggleButton(modules.get("name"));
+					moduleButton.setEnabled(false);
+					moduleButton.setStylePrimaryName("Boton-marco");
+					firstRowButtons.add(moduleButton);
+					firstRowButtons.setCellVerticalAlignment(moduleButton, HasVerticalAlignment.ALIGN_MIDDLE);
+					firstRowButtons.setCellHorizontalAlignment(moduleButton, HasHorizontalAlignment.ALIGN_CENTER);
 				}
-				vPanel.add(hModulosPanel);
-				for(Map<String, String> Salas : valuesSalas) {							
-					final String nombresala=Salas.get("nombresala");
-					final int idSala=Integer.parseInt(Salas.get("salaid"));
-					final String horaInicio = Salas.get("horaInicio");
-					final String horaFin = Salas.get("horaFin");
+				
+				matrixButtons.add(firstRowButtons);
+				
+				for(Map<String, String> rooms : valuesRooms) {							
+					final String nameRoom = rooms.get("nombresala"); 
+					final int idRoom = Integer.parseInt(rooms.get("salaid"));
+					
+					rowButtons = new HorizontalPanel();
+					rowButtons.setSpacing(4);
+					ToggleButton numberRoom = new ToggleButton(nameRoom); 
+					numberRoom.setEnabled(false);
+					numberRoom.setStylePrimaryName("Boton-marco"); 
+					rowButtons.add(numberRoom);
+					rowButtons.setCellVerticalAlignment(numberRoom, HasVerticalAlignment.ALIGN_MIDDLE);
+					rowButtons.setCellHorizontalAlignment(numberRoom, HasHorizontalAlignment.ALIGN_CENTER);
 
-					HorizontalPanel hPanel = new HorizontalPanel();
-					hPanel.setSpacing(4);
-					ToggleButton botoncito = new ToggleButton(nombresala);
-					botoncito.setEnabled(false);
-					botoncito.setStylePrimaryName("Boton-marco");
-					hPanel.add(botoncito);
-
-					List<Map<String, String>> valuesDisp = AjaxRequest.getValuesFromResultString(Salas.get("disponibilidad"));
-					for(Map<String, String> Disp : valuesDisp) {	
-						final boolean estadoFinal= false;
-
-						final SalasButton boton = new SalasButton(
-								nombresala, // Sala
-								idSala,
-								Disp.get("horaInicio"),
-								Disp.get("horaFin"),								
-								Disp.get("modulonombre"),
-								Integer.parseInt(Disp.get("moduloid")), // Módulo
-								Integer.parseInt(Disp.get("ocupada")) == 1,//si esta reservada
+					List<Map<String, String>> valuesBookingAvailable = AjaxRequest.getValuesFromResultString(rooms.get("disponibilidad"));
+					for(Map<String, String> bookAvaible : valuesBookingAvailable) {	
+						
+						final SalasButton book = new SalasButton(  
+								nameRoom,
+								idRoom,
+								bookAvaible.get("horaInicio"),
+								bookAvaible.get("horaFin"),								
+								bookAvaible.get("modulonombre"),
+								Integer.parseInt(bookAvaible.get("moduloid")), // Módulo
+								Integer.parseInt(bookAvaible.get("ocupada")) == 1,//si esta reservada
 								capSobre == 1,// Si se puede sobreescribir
 								"",
 								"",
 								new ClickHandler() {
-
 									public void onClick(ClickEvent event) {
 
-										SalasButton btn = (SalasButton) event.getSource();
-
-										if(btn.isDown()){
-											if(admin == false){
+										SalasButton buttonBook = (SalasButton) event.getSource(); 
+										if(buttonBook.isDown()){
+											if(isAdmin == 1){
+												// I am an administrator, no booking restrictions
 												
-											if(totalreservassemana!=0){
-											if(totalreservashoy!=0){
-
-												for(SalasButton bt : getHermanosVerticales(btn)) {
-
-													bt.setDown(false);
-												}
-												
-												if(cuantosApretados(btn, estadoFinal) > totalreservashoy) {
-													btn.setDown(false);
-													Window.alert("No puedes seleccionar más de "+totalreservashoy+" módulo(s) el día de hoy.");
-													return;
-												}
 											}else{
-												btn.setDown(false);
-												Window.alert("No puedes reservar más módulos el día de hoy.");
-											}
-											}else{
-												btn.setDown(false);
-												Window.alert("No puedes reservar más módulos esta semana.");
+												// I am not administered. Availability Booking
+												if(availabilityBookingWeek > 0){
+													if(availabilityBookingToday > 0){
+														for(SalasButton bt : getVerticalButtons(buttonBook)) {
+															bt.setDown(false);
+														}
 												
+														if(howManyButtonsDown(buttonBook, false) > availabilityBookingToday) {
+															buttonBook.setDown(false);
+															Window.alert("No puedes seleccionar más de "+availabilityBookingToday+" módulo(s) el día de hoy.");
+															return;
+														}																
+													}else{
+														buttonBook.setDown(false);
+														Window.alert("No puedes reservar más módulos el día de hoy.");
+													}
+												}else{
+													buttonBook.setDown(false);
+													Window.alert("No puedes reservar más módulos esta semana.");														
+												}
 											}
-										}
 										}
 									}
 
 								});
-
-						hPanel.add(boton);
+						rowButtons.add(book);
 					}
-					vPanel.add(hPanel);
+					matrixButtons.add(rowButtons);
 				}
 			}
 			@Override
@@ -196,158 +309,140 @@ public class Salas implements EntryPoint {
 				System.out.println("Callback error");
 			}
 		});
-
-		final FormPanel form = new FormPanel();
+		
+		form = new FormPanel();
 		form.setAction("");
-		// Because we're going to add a FileUpload widget, 
-		// we'll need to set the form to use the POST method, 
-		// and multipart MIME encoding.
-		form.setEncoding(FormPanel.ENCODING_MULTIPART);
+		form.setEncoding(FormPanel.ENCODING_URLENCODED);
 		form.setMethod(FormPanel.METHOD_POST);
+		formPanel = new VerticalPanel(); 
+		formPanel.setSpacing(4);
+		form.setWidget(formPanel);
 
-		// Create a panel to hold all of the form widgets.
-		VerticalPanel panel = new VerticalPanel();
-		panel.setSpacing(4);
-		form.setWidget(panel);
-
-		final TextBox nombreEvento = new TextBox();	
-
-		final TextBox asistentes = new TextBox();
-
-		final  TextBox correo = new TextBox();
-
-		final String nombreEventoTxt = "Nombre del evento";
-		nombreEvento.setValue(nombreEventoTxt);
-		nombreEvento.setStylePrimaryName("Text-Box");
-		nombreEvento.addClickHandler(new ClickHandler() {
+		eventName = new TextBox();
+		eventNameTxt = "Nombre del evento";
+		eventName.setValue(eventNameTxt);
+		eventName.setStylePrimaryName("Text-Box");
+		eventName.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				nombreEvento.setValue(null); 
-
-				if(asistentes.getValue().length()== 0){
-
-					asistentes.setValue("Asistentes");
+				eventName.setValue(null); 
+				if(attendeesAmount.getValue().length()== 0){
+					attendeesAmount.setValue("Asistentes");
 				}
-				if(correo.getValue().length()== 0){
-					correo.setValue("Correo electrónico");
-
-				}
-
-			}
-		});
-		final String asistentesTxt="Asistentes";
-		asistentes.setValue(asistentesTxt);
-		asistentes.setStylePrimaryName("Text-Box");
-		asistentes.addClickHandler(new ClickHandler() {
-			@Override
-			public void onClick(ClickEvent event) {
-				asistentes.setValue(null);   
-
-				if(nombreEvento.getValue().length()== 0 ){
-					nombreEvento.setValue("Nombre del evento");
-
-				}
-				if(correo.getValue().length()== 0){
-					correo.setValue("Correo electrónico");
-
+				if(emailForm.getValue().length()== 0){
+					emailForm.setValue("Correo electrónico");
 				}
 			}
 		});
-		final String correoTxt="Correo electrónico";
-		correo.setValue(correoTxt);
-		correo.setStylePrimaryName("Text-Box");
-		correo.addClickHandler(new ClickHandler() {
+		
+		attendeesAmount = new TextBox(); 
+		attendeesAmountTxt = "Asistentes";
+		attendeesAmount.setValue(attendeesAmountTxt);
+		attendeesAmount.setStylePrimaryName("Text-Box");
+		attendeesAmount.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				correo.setValue(null);   
-
-				if(asistentes.getValue().length()== 0){
-
-					asistentes.setValue("Asistentes");
+				attendeesAmount.setValue(null);   
+				if(eventName.getValue().length()== 0 ){
+					eventName.setValue("Nombre del evento");
 				}
-				if(nombreEvento.getValue().length()== 0){
-					nombreEvento.setValue("Nombre del evento");
-
+				if(emailForm.getValue().length()== 0){
+					emailForm.setValue("Correo electrónico");
+				}
+			}
+		});
+		
+		emailForm = new TextBox();
+		emailFormTxt = "Correo electrónico";
+		emailForm.setValue(emailFormTxt);
+		emailForm.setStylePrimaryName("Text-Box");
+		emailForm.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				emailForm.setValue(null);   
+				if(attendeesAmount.getValue().length()== 0){
+					attendeesAmount.setValue("Asistentes");
+				}
+				if(eventName.getValue().length()== 0){
+					eventName.setValue("Nombre del evento");
 				}
 			}
 		});
 
-		panel.add(nombreEvento);
-		panel.add(asistentes);
-		panel.add(correo);
-		// Add a 'submit' button.
-		panel.add(new Button("Submit", new ClickHandler() {
+		formPanel.add(eventName);
+		formPanel.add(attendeesAmount);
+		formPanel.add(emailForm);
+		formPanel.add(new Button("Reservar", new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
+				event.preventDefault();
 				form.submit();					
 			}
 		}));
+		
+		decoratordecoratorPanelFormPanel = new DecoratorPanel();
+		decoratordecoratorPanelFormPanel.add(form);
+
+		RootPanel.get(buttonsRoomsDivId).add(matrixButtons);
+		RootPanel.get(buttonsRoomsDivId).add(decoratordecoratorPanelFormPanel);
 
 		// Add an event handler to the form.
-		form.addSubmitHandler(new FormPanel.SubmitHandler() {
+		form.addSubmitHandler(new SubmitHandler() {
 			@Override
 			public void onSubmit(SubmitEvent event) {
 				// This event is fired just before the form is submitted. 
 				// We can take this opportunity to perform validation.
 
-				if (nombreEvento.getText().length() == 0 || nombreEvento.getText().equals(nombreEventoTxt)) {
+				if(eventName.getText().length() == 0 || eventName.getText().equals(eventNameTxt)) {
 					Window.alert("Debe escribir un  nombre de evento.");
-					nombreEvento.setStylePrimaryName("Text-Box-vacio");
-					nombreEvento.setValue("Nombre del evento");
-
+					eventName.setStylePrimaryName("Text-Box-vacio");
+					//eventName.setValue("Nombre del evento");
 					event.cancel();
 				}else{
-					nombreEvento.setStylePrimaryName("Text-Box");
-
-				}	
-				if (asistentes.getText().length() == 0 || asistentes.getText().equals(asistentesTxt)) {
+					eventName.setStylePrimaryName("Text-Box");
+				}
+				
+				if(attendeesAmount.getText().length() == 0 || attendeesAmount.getText().equals(attendeesAmountTxt)) {
 					Window.alert("Debe escribir la cantidad de asistentes.");
-					asistentes.setStylePrimaryName("Text-Box-vacio");
-					asistentes.setValue("Asistentes");
-
+					attendeesAmount.setStylePrimaryName("Text-Box-vacio");
+					//attendeesAmount.setValue("Asistentes");
 					event.cancel();
-				}	else{
-					asistentes.setStylePrimaryName("Text-Box");
-
-
+				}else{
+					attendeesAmount.setStylePrimaryName("Text-Box");
 				}
 
-				if (correo.getText().length() == 0 || correo.getText().equals(correoTxt)) {
+				if(emailForm.getText().length() == 0 || emailForm.getText().equals(emailFormTxt)) {
 					Window.alert("Debe escribir el correo de usuario.");
-
-					correo.setStylePrimaryName("Text-Box-vacio");
-					correo.setValue("Correo electrónico");
-
+					emailForm.setStylePrimaryName("Text-Box-vacio");
+					//emailForm.setValue("Correo electrónico");
 					event.cancel();
-				}	else{
-					correo.setStylePrimaryName("Text-Box");
+				}else{
+					emailForm.setStylePrimaryName("Text-Box");
 
 				}	
-			}
+			}	
+			
 		});
-
-		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+		
+		form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
 			@Override
 			public void onSubmitComplete(SubmitCompleteEvent event) {
+				Window.alert(event.getResults());
+				Window.alert("cargo submit");
+						int rows = getAllButtonsDown(matrixButtons).size() + 1;								
+						resultPanelBookings = new VerticalPanel(); 
+						resultPanelBookings.setSpacing(4); 
 
-				AjaxRequest.ajaxRequest("action=info", new AsyncCallback<AjaxData>() {
-
-					@Override
-					public void onSuccess(AjaxData result) {
-						int rows = getApretados(vPanel).size() + 1;	
+						final Grid dataTable = new Grid(rows, 5); 
+						// Header data table
+						dataTable.setText(0,0,"Nombre sala");
+						dataTable.setText(0,1,"Módulo");
+						dataTable.setText(0,2,"Hora inicio");
+						dataTable.setText(0,3,"Hora término");
+						dataTable.setText(0,4,"Estado");
+						dataTable.setBorderWidth(1);
 						
-						VerticalPanel vPanelForm = new VerticalPanel();
-						vPanelForm.setSpacing(4); 
-
-						final Grid g = new Grid(rows, 5);
-						g.setText(0,0,"Nombre sala");
-						g.setText(0,1,"Módulo");
-						g.setText(0,2,"Hora inicio");
-						g.setText(0,3,"Hora término");
-						g.setText(0,4,"Estado");
-						g.setBorderWidth(1);
-						List<Map<String, String>> values = getApretados(vPanel);
-						
+						List<Map<String, String>> values = getAllButtonsDown(matrixButtons);							
 						String sala = "inicio";
 						String modulo ="inicio";
 						String nombreSalas="inicio";
@@ -355,7 +450,6 @@ public class Salas implements EntryPoint {
 						String  inicio="inicio";
 						String  termino="inicio";
 						for(Map<String, String> Disp : values) {
-							AjaxRequest.moodleUrl = url;
 							sala= sala+","+Disp.get("idSala");
 							modulo= modulo+","+Disp.get("idModulo");
 							nombreSalas=nombreSalas+","+Disp.get("nombreSala");
@@ -363,101 +457,77 @@ public class Salas implements EntryPoint {
 							inicio=inicio+","+Disp.get("inicio");
 							termino=termino+","+Disp.get("termino");
 						}
-						
-						
-							String param = "&inicio="+inicio+"&termino="+termino+"&nombremodulo="+nombreModulo+"&nombresala="+nombreSalas+"&moduleid="+modulo+"&room="+sala+"&date="+date+"&name="+nombreEvento.getValue()+"&asistentes="+asistentes.getValue()+"&multiply="+multiply+"&finalDate="+finalDate+"&days="+days+"&frequency="+frequency;
-							
+							counter = 1;		
+							String param = "&inicio="+inicio+"&termino="+termino+"&nombremodulo="+nombreModulo+"&nombresala="+nombreSalas+"&moduleid="+modulo+"&room="+sala+"&date="+initialDate+"&name="+eventName.getValue()+"&asistentes="+attendeesAmount.getValue()+"&multiply="+advOptions+"&finalDate="+endDate+"&days="+selectDays+"&frequency="+weeklyFrequencyBookings;								
 							AjaxRequest.ajaxRequest("action=submission"+param, new AsyncCallback<AjaxData>() {
-
 								@Override
 								public void onSuccess(AjaxData result) {
 									Map<String, String> values = AjaxRequest.getValueFromResult(result);
 									
-									List<Map<String, String>> valuesReservas = AjaxRequest.getValuesFromResultString(values.get("ok"));
-									List<Map<String, String>> valuesReservasE = AjaxRequest.getValuesFromResultString(values.get("err"));
-									for(Map<String, String> reservas : valuesReservas) {	
-									g.setText(contador,0,reservas.get("nombresala"));
-									g.setText(contador,1,reservas.get("nombremodulo"));
-									g.setText(contador,2,reservas.get("inicio"));
-									g.setText(contador,3,reservas.get("termino"));
-									g.setText(contador,4,"OK");
-									contador++;
+									
+									List<Map<String, String>> valuesvaluesSatisfactoryBookingsReservas = AjaxRequest.getValuesFromResultString(values.get("well"));
+									List<Map<String, String>> valuesErroneousBookings = AjaxRequest.getValuesFromResultString(values.get("errors"));
+									
+									for(Map<String, String> bookings : valuesvaluesSatisfactoryBookingsReservas) {	
+										dataTable.setText(counter,0,bookings.get("nombresala"));
+										dataTable.setText(counter,1,bookings.get("nombremodulo"));
+										dataTable.setText(counter,2,bookings.get("inicio"));
+										dataTable.setText(counter,3,bookings.get("termino"));
+										dataTable.setText(counter,4,"OK");
+										counter++;
 									}
-									for(Map<String, String> reservas : valuesReservasE) {	
-										g.setText(contador,0,reservas.get("nombresala"));
-										g.setText(contador,1,reservas.get("nombremodulo"));
-										g.setText(contador,2,reservas.get("inicio"));
-										g.setText(contador,3,reservas.get("termino"));
-										g.setText(contador,4,"Error");
-										contador++;
-										
-										
-									}
-								
+									
+									for(Map<String, String> bookings : valuesErroneousBookings) {	
+										dataTable.setText(counter,0,bookings.get("nombresala"));
+										dataTable.setText(counter,1,bookings.get("nombremodulo"));
+										dataTable.setText(counter,2,bookings.get("inicio"));
+										dataTable.setText(counter,3,bookings.get("termino"));
+										dataTable.setText(counter,4,"Error");
+										counter++;																								
+									}										
 								}
+								
 								public void onFailure(Throwable caught) {
 									System.out.println("Callback error");
 								}
-
 							});
-
-						
-						
-						Map<String, String> valuesU = AjaxRequest.getValueFromResult(result);
-						Map<String, String> valuesUser = AjaxRequest.getValueFromResultString(valuesU.get("User"));
-
-
-						Date fecha = new Date(date * 1000L); // *1000 is to convert seconds to milliseconds
-						Date fechaFinal = new Date(finalDate * 1000L); // *1000 is to convert seconds to milliseconds
+							
+						Date dateInfo = new Date(initialDate * 1000L); // *1000 is to convert seconds to milliseconds
+						Date dateEndInfo = new Date(endDate * 1000L); // *1000 is to convert seconds to milliseconds
 						DateTimeFormat fmt = DateTimeFormat.getFormat("d/M/yyyy");
-						
-						
-						
+
 						Grid info = new Grid(7, 2);
 						info.setBorderWidth(0);
 						info.setText(0,0,"Nombre del evento:");
-						info.setText(0,1,nombreEvento.getValue());
+						info.setText(0,1,eventName.getValue());
 						info.setText(1,0,"Fecha inicio:");
-						info.setText(1,1,fmt.format(fecha));
+						info.setText(1,1,fmt.format(dateInfo));
 						info.setText(2,0,"Fecha término:");
-						info.setText(2,1,fmt.format(fechaFinal));
+						info.setText(2,1,fmt.format(dateEndInfo));
 						info.setText(3,0,"Frecuencia:");
-						info.setText(3,1,"Cada "+frequency+" semana(s)");
+						info.setText(3,1,"Cada "+weeklyFrequencyBookings+" semana(s)");
 						info.setText(4,0,"N° de asistentes:");
-						info.setText(4,1,asistentes.getValue());
+						info.setText(4,1,attendeesAmount.getValue());
 						info.setText(5,0,"Responsable");
-						info.setText(5,1,valuesUser.get("firstname") +" "+valuesUser.get("lastname"));
+						info.setText(5,1,userName+" "+userLastName);
 						info.setText(6,0,"Correo responsable:");
-						info.setText(6,1,valuesUser.get("email"));
+						info.setText(6,1,userEmail);
 
-						vPanelForm.add(info);
-						vPanelForm.add(g);
-						RootPanel.get("salas").clear();
-						RootPanel.get("salas").add(vPanelForm);
-					}
-
-					@Override
-					public void onFailure(Throwable caught) {
-						System.out.println("Callback error");
-					}
-				});
-
-			}
+						resultPanelBookings.add(info);
+						resultPanelBookings.add(dataTable);
+						matrixButtons.setVisible(false);
+						decoratordecoratorPanelFormPanel.setVisible(false);
+						//RootPanel.get(buttonsRoomsDivId).clear();
+						RootPanel.get(buttonsRoomsDivId).add(resultPanelBookings);
+					
+			}		
 		});
-
-		DecoratorPanel decoratorPanel = new DecoratorPanel();
-		decoratorPanel.add(form);
-
-
-		RootPanel.get("salas").add(vPanel);
-		RootPanel.get("salas").add(decoratorPanel);
-		
+	
 	}
+	
 
-	private List<SalasButton> getHermanos(SalasButton btn) {
-
-		List<SalasButton> hermanos = new ArrayList<SalasButton>();
-
+	private List<SalasButton> getButtons(SalasButton btn){
+		List<SalasButton> buttons = new ArrayList<SalasButton>();
 		VerticalPanel vpanel = (VerticalPanel) btn.getParent().getParent();
 		for(int i=0; i < vpanel.getWidgetCount(); i++) {
 			HorizontalPanel hpanel = (HorizontalPanel) vpanel.getWidget(i);
@@ -466,19 +536,15 @@ public class Salas implements EntryPoint {
 					continue;
 				SalasButton bt = (SalasButton) hpanel.getWidget(j);
 				if(bt != btn)
-					hermanos.add(bt);
+					buttons.add(bt);
 			}
 		}
-
-		return hermanos;
+		return buttons;
 	}
 
-	private List<SalasButton> getHermanosVerticales(SalasButton btn) {
-
-		List<SalasButton> hermanos = new ArrayList<SalasButton>();
-
+	private List<SalasButton> getVerticalButtons(SalasButton btn){ 
+		List<SalasButton> buttons = new ArrayList<SalasButton>(); 
 		VerticalPanel vpanel = (VerticalPanel) btn.getParent().getParent();
-
 		for(int i=0; i < vpanel.getWidgetCount(); i++) {
 			HorizontalPanel hpanel = (HorizontalPanel) vpanel.getWidget(i);
 			for(int j=0; j < hpanel.getWidgetCount(); j++) {
@@ -487,16 +553,14 @@ public class Salas implements EntryPoint {
 				SalasButton bt = (SalasButton) hpanel.getWidget(j);
 
 				if(bt != btn && bt.getModuloid() == btn.getModuloid())
-					hermanos.add(bt);
+					buttons.add(bt);
 			}
 		}
-
-		return hermanos;
+		return buttons;
 	}
-	private List<Map<String, String>> getApretados(VerticalPanel vPanel) {
-		List<Map<String, String>> hermanos = new ArrayList<Map<String,String>>();
-
-		//List<String> hermanos = new ArrayList<String>();
+	
+	private List<Map<String, String>> getAllButtonsDown(VerticalPanel vPanel){ 	
+		List<Map<String, String>> buttonsDown = new ArrayList<Map<String,String>>();
 		for(int i=0; i < vPanel.getWidgetCount(); i++) {
 			HorizontalPanel hpanel = (HorizontalPanel) vPanel.getWidget(i);
 			for(int j=0; j < hpanel.getWidgetCount(); j++) {
@@ -504,7 +568,6 @@ public class Salas implements EntryPoint {
 					continue;
 				SalasButton bt = (SalasButton) hpanel.getWidget(j);
 				if(bt.isDown()){
-
 					Map<String, String> obj = new HashMap<String, String>();
 					obj.put("nombreSala",bt.getSala());
 					obj.put("idSala",String.valueOf(bt.getSalaid()));
@@ -512,28 +575,23 @@ public class Salas implements EntryPoint {
 					obj.put("nombreModulo",bt.getModulo());
 					obj.put("inicio",bt.getModuloInicio());	
 					obj.put("termino",bt.getModuloTermino());
-					hermanos.add(obj);
+					buttonsDown.add(obj);
 				}
-
 			}
 		}
-
-		return hermanos;
+		return buttonsDown;
 	}
-	private int cuantosApretados(SalasButton btn, boolean reserva) {
+	
+	private int howManyButtonsDown(SalasButton btn, boolean book){ 
 		int total = 0;
-		if(reserva == false){
+		if(book == false){
 			if(btn.isDown())
 				total++;
-			for(SalasButton bt : getHermanos(btn)) {
+			for(SalasButton bt : getButtons(btn)) {
 				if(bt.isDown())
 					total++;
 			}
 		}
 		return total;
-
-
 	}
-
-
 }
