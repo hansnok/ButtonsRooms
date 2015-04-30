@@ -19,8 +19,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
-import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 import com.google.gwt.user.client.ui.Grid;
@@ -50,7 +48,7 @@ public class Salas implements EntryPoint{
 	/** Auxiliary variable for controlling loading modules  **/
 	private boolean initiate = false;
 	
-	/**  **/
+	/** Panels for interface **/
 	private VerticalPanel matrixButtons = null;
 	private HorizontalPanel firstRowButtons = null;
 	private HorizontalPanel rowButtons = null;
@@ -64,6 +62,7 @@ public class Salas implements EntryPoint{
 	private String emailFormTxt = null;
 	private VerticalPanel resultPanelBookings = null;
 	private DecoratorPanel decoratordecoratorPanelFormPanel = null;
+	private Button submit = null;
 	
 	/** Variables extracted from the div **/
 	private int initialDate = -1;
@@ -371,14 +370,16 @@ public class Salas implements EntryPoint{
 
 		formPanel.add(eventName);
 		formPanel.add(attendeesAmount);
-		formPanel.add(emailForm);
-		formPanel.add(new Button("Reservar", new ClickHandler() {
+		//formPanel.add(emailForm);
+		submit = new Button("Reservar", new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
 				event.preventDefault();
 				form.submit();					
 			}
-		}));
+		});
+		submit.setStylePrimaryName("gwt-Button");
+		formPanel.add(submit);
 		
 		decoratordecoratorPanelFormPanel = new DecoratorPanel();
 		decoratordecoratorPanelFormPanel.add(form);
@@ -395,33 +396,41 @@ public class Salas implements EntryPoint{
 				if(eventName.getText().length() == 0 || eventName.getText().equals(eventNameTxt)) {
 					Window.alert("Debe escribir un  nombre de evento.");
 					eventName.setStylePrimaryName("Text-Box-vacio");
-					//eventName.setValue("Nombre del evento");
+					eventName.setValue("Nombre del evento");
 					event.cancel();
 				}else{
 					eventName.setStylePrimaryName("Text-Box");
 				}
 				
-				if(attendeesAmount.getText().length() == 0 || attendeesAmount.getText().equals(attendeesAmountTxt)) {
+				if(!attendeesAmount.getText().matches("[0-9]*")){
+					Window.alert("La cantidad de asistentes debe ser un número entero");
+					attendeesAmount.setStylePrimaryName("Text-Box-vacio");
+					event.cancel();
+				}
+				
+				if(attendeesAmount.getText().length() == 0 || attendeesAmount.getText().equals(attendeesAmountTxt) ) {
 					Window.alert("Debe escribir la cantidad de asistentes.");
 					attendeesAmount.setStylePrimaryName("Text-Box-vacio");
-					//attendeesAmount.setValue("Asistentes");
+					attendeesAmount.setValue("Asistentes");
 					event.cancel();
 				}else{
 					attendeesAmount.setStylePrimaryName("Text-Box");
-				}
-
-				if(emailForm.getText().length() == 0 || emailForm.getText().equals(emailFormTxt)) {
-					Window.alert("Debe escribir el correo de usuario.");
-					emailForm.setStylePrimaryName("Text-Box-vacio");
-					//emailForm.setValue("Correo electrónico");
+				}			
+//					if(emailForm.getText().length() == 0 || emailForm.getText().equals(emailFormTxt)) {
+//						Window.alert("Debe escribir el correo de usuario.");
+//						emailForm.setStylePrimaryName("Text-Box-vacio");
+//						emailForm.setValue("Correo electrónico");
+//						event.cancel();
+//					}else{
+//						emailForm.setStylePrimaryName("Text-Box");
+//					}			
+				if(endDate < initialDate) {
+					Window.alert("Verficar correcta selección de fechas");
 					event.cancel();
-				}else{
-					emailForm.setStylePrimaryName("Text-Box");
-
 				}
 				
 				if(!event.isCanceled()){
-					Window.alert("validacion lista??");
+					
 					int rows = getAllButtonsDown(matrixButtons).size() + 1;								
 					resultPanelBookings = new VerticalPanel(); 
 					resultPanelBookings.setSpacing(4); 
