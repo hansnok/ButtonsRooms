@@ -461,16 +461,17 @@ public class Salas implements EntryPoint{
 					}
 						counter = 1;		
 						String param = "&inicio="+inicio+"&termino="+termino+"&nombremodulo="+nombreModulo+"&nombresala="+nombreSalas+"&moduleid="+modulo+"&room="+sala+"&date="+initialDate+"&name="+eventName.getValue()+"&asistentes="+attendeesAmount.getValue()+"&multiply="+advOptions+"&finalDate="+endDate+"&days="+selectDays+"&frequency="+weeklyFrequencyBookings;								
+						
 						AjaxRequest.ajaxRequest("action=submission"+param, new AsyncCallback<AjaxData>() {
 							@Override
 							public void onSuccess(AjaxData result) {
 								Map<String, String> values = AjaxRequest.getValueFromResult(result);
 								
 								
-								List<Map<String, String>> valuesvaluesSatisfactoryBookingsReservas = AjaxRequest.getValuesFromResultString(values.get("well"));
+								List<Map<String, String>> valuesSatisfactoryBookingsReservas = AjaxRequest.getValuesFromResultString(values.get("well"));
 								List<Map<String, String>> valuesErroneousBookings = AjaxRequest.getValuesFromResultString(values.get("errors"));
 								
-								for(Map<String, String> bookings : valuesvaluesSatisfactoryBookingsReservas) {	
+								for(Map<String, String> bookings : valuesSatisfactoryBookingsReservas) {	
 									dataTable.setText(counter,0,bookings.get("nombresala"));
 									dataTable.setText(counter,1,bookings.get("nombremodulo"));
 									dataTable.setText(counter,2,bookings.get("inicio"));
