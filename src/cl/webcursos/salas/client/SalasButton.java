@@ -4,18 +4,21 @@
 package cl.webcursos.salas.client;
 
 
+import java.util.Date;
+
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 
 /**
  * @author Francisco García
- *
+ *		   2015 Mark Michaelsen (mmichaelsen678@gmail.com)
  */
 public class SalasButton extends ToggleButton {
 
@@ -28,13 +31,28 @@ public class SalasButton extends ToggleButton {
 	private boolean ocupado = false;
 	private PopupPanel popup = null;
 	private int idSala;
+	private int isAdmin;
+	private int initialDate;
+	
+	private long unixTime = System.currentTimeMillis() / 1000L;
+	private Date currentDate = new Date();
+	private DateTimeFormat hourFormat = DateTimeFormat.getFormat("HH:mm");
+	private String s = hourFormat.format(currentDate);
+	private String[] splitNow = s.split(":");
+	private int hourNow = Integer.parseInt(splitNow[0]);
+	private int minuteNow = Integer.parseInt(splitNow[1]);
+	private int moduleHour;
+	private int moduleMinute;
+
 	/**
 	 * @param upText
 	 * @param downText
 	 * @param handler
 	 */
-	public SalasButton(String sala,int idSala,String horaInicio,String horaFin,String modulo,int idModulo, boolean ocupa, boolean sobree, String upText, String downText, ClickHandler handler) {
+	public SalasButton(int isAdmin, int initialDate, String sala,int idSala,String horaInicio,String horaFin,String modulo,int idModulo, boolean ocupa, boolean sobree, String upText, String downText, ClickHandler handler) {
 		super(upText, downText, handler);
+		this.isAdmin = isAdmin;
+		this.initialDate = initialDate;
 		this.nombreSala = sala;
 		this.idSala = idSala;
 		this.nombreModulo = modulo;
@@ -42,8 +60,10 @@ public class SalasButton extends ToggleButton {
 		this.ocupado = ocupa;
 		this.idModulo = idModulo;
 		this.inicioModulo = horaInicio;
-		this.terminoModulo = horaFin;
+		this.terminoModulo = horaFin; //
 		
+		this.moduleHour = Integer.parseInt(this.inicioModulo.split(":")[0]);
+		this.moduleMinute = Integer.parseInt(this.inicioModulo.split(":")[1]);
 		
 		this.popup = new PopupPanel(true);
 		
@@ -72,7 +92,16 @@ public class SalasButton extends ToggleButton {
 				this.setEnabled(false);
 			}
 		}
-	
+		
+		if(unixTime >= this.initialDate){
+			if(this.hourNow > this.moduleHour){
+				this.setEnabled(false);
+				this.setStylePrimaryName("Boton-deshabilitado");
+			}else if(this.hourNow == this.moduleHour && this.minuteNow > this.moduleMinute){
+				this.setEnabled(false);
+				this.setStylePrimaryName("Boton-deshabilitado");
+			}
+		}
 	}
 
 	public String getSala() {

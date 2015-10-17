@@ -253,7 +253,10 @@ public class Salas implements EntryPoint{
 					List<Map<String, String>> valuesBookingAvailable = AjaxRequest.getValuesFromResultString(rooms.get("disponibilidad"));
 					for(Map<String, String> bookAvaible : valuesBookingAvailable) {	
 						
+						
 						final SalasButton book = new SalasButton(  
+								isAdmin,
+								initialDate,
 								nameRoom,
 								idRoom,
 								bookAvaible.get("horaInicio"),
@@ -261,7 +264,7 @@ public class Salas implements EntryPoint{
 								bookAvaible.get("modulonombre"),
 								Integer.parseInt(bookAvaible.get("moduloid")), // Módulo
 								Integer.parseInt(bookAvaible.get("ocupada")) == 1,//si esta reservada
-								capSobre == 1,// Si se puede sobreescribir
+								capSobre == 1, // Si se puede sobreescribir
 								"",
 								"",
 								new ClickHandler() {
@@ -269,11 +272,8 @@ public class Salas implements EntryPoint{
 
 										SalasButton buttonBook = (SalasButton) event.getSource(); 
 										if(buttonBook.isDown()){
-											if(isAdmin == 1){
-												// I am an administrator, no booking restrictions
-												
-											}else{
-												// I am not administered. Availability Booking
+											if(isAdmin != 1){
+												// Booking restrictions for not administrator users
 												if(availabilityBookingWeek > 0){
 													if(availabilityBookingToday > 0){
 														for(SalasButton bt : getVerticalButtons(buttonBook)) {
@@ -294,6 +294,7 @@ public class Salas implements EntryPoint{
 													Window.alert("No puedes reservar más módulos esta semana.");														
 												}
 											}
+											
 										}
 									}
 
