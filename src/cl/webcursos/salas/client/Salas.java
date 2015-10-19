@@ -254,6 +254,7 @@ public class Salas implements EntryPoint{
 					for(Map<String, String> bookAvaible : valuesBookingAvailable) {	
 						
 						final SalasButton book = new SalasButton(  
+								initialDate,
 								nameRoom,
 								idRoom,
 								bookAvaible.get("horaInicio"),
