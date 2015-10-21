@@ -33,7 +33,10 @@ public class SalasButton extends ToggleButton {
 	private int idSala;
 	private int initialDate;
 	
+	// unixTime is the current time in Unix format.
 	private long unixTime = System.currentTimeMillis() / 1000L;
+	
+	// currentDate is used to get the actual hour.
 	private Date currentDate = new Date();
 	private DateTimeFormat hourFormat = DateTimeFormat.getFormat("HH:mm");
 	private String s = hourFormat.format(currentDate);
@@ -81,6 +84,7 @@ public class SalasButton extends ToggleButton {
 			}
 		});
 	
+		// Filters each button depending on it's module's time. Blocks modules that already passed.
 		if(!this.ocupado){
 			this.setStylePrimaryName("Boton-disponible");
 			if(unixTime >= this.initialDate){
