@@ -33,7 +33,10 @@ public class SalasButton extends ToggleButton {
 	private int idSala;
 	private int initialDate;
 	
+	// unixTime is the current time in Unix format.
 	private long unixTime = System.currentTimeMillis() / 1000L;
+	
+	// currentDate is used to get the actual hour.
 	private Date currentDate = new Date();
 	private DateTimeFormat hourFormat = DateTimeFormat.getFormat("HH:mm");
 	private String s = hourFormat.format(currentDate);
@@ -47,7 +50,7 @@ public class SalasButton extends ToggleButton {
 	 * @param downText
 	 * @param handler
 	 */
-	public SalasButton(int initialDate, String sala,int idSala,String horaInicio,String horaFin,String modulo,int idModulo, boolean ocupa, boolean sobree, String upText, String downText, ClickHandler handler) {
+	public SalasButton(int initialDate, String sala, int idSala, String horaInicio, String horaFin, String modulo, int idModulo, boolean ocupa, boolean sobree, String upText, String downText, ClickHandler handler) {
 		super(upText, downText, handler);
 		this.initialDate = initialDate;
 		this.nombreSala = sala;
@@ -81,25 +84,25 @@ public class SalasButton extends ToggleButton {
 			}
 		});
 	
+		// Filters each button depending on it's module's time. Blocks modules that already passed.
 		if(!this.ocupado){
 			this.setStylePrimaryName("Boton-disponible");
-		} else {
+			if(unixTime >= this.initialDate){
+				if(this.hourNow > this.moduleHour){
+					this.setEnabled(false);
+					this.setStylePrimaryName("Boton-deshabilitado");
+				}else if(this.hourNow == this.moduleHour && this.minuteNow > moduleMinute){
+					this.setEnabled(false);
+					this.setStylePrimaryName("Boton-deshabilitado");
+				}
+			}
+		}else{
 			this.setStylePrimaryName("Boton-ocupado-nulo");
 			if(!this.sobreescribir) {
 				this.setEnabled(false);
 			}
 		}
 		
-		if(unixTime >= this.initialDate){
-			if(this.hourNow > this.moduleHour){
-				this.setEnabled(false);
-				this.setStylePrimaryName("Boton-deshabilitado");
-			}else if(this.hourNow == this.moduleHour && this.minuteNow > this.moduleMinute){
-				this.setEnabled(false);
-				this.setStylePrimaryName("Boton-deshabilitado");
-			}
-		}
-	
 	}
 
 	public String getSala() {
