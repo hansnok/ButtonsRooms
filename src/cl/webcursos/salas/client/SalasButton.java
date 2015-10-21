@@ -47,7 +47,7 @@ public class SalasButton extends ToggleButton {
 	 * @param downText
 	 * @param handler
 	 */
-	public SalasButton(int initialDate, String sala,int idSala,String horaInicio,String horaFin,String modulo,int idModulo, boolean ocupa, boolean sobree, String upText, String downText, ClickHandler handler) {
+	public SalasButton(int initialDate, String sala, int idSala, String horaInicio, String horaFin, String modulo, int idModulo, boolean ocupa, boolean sobree, String upText, String downText, ClickHandler handler) {
 		super(upText, downText, handler);
 		this.initialDate = initialDate;
 		this.nombreSala = sala;
@@ -83,23 +83,22 @@ public class SalasButton extends ToggleButton {
 	
 		if(!this.ocupado){
 			this.setStylePrimaryName("Boton-disponible");
-		} else {
+			if(unixTime >= this.initialDate){
+				if(this.hourNow > this.moduleHour){
+					this.setEnabled(false);
+					this.setStylePrimaryName("Boton-deshabilitado");
+				}else if(this.hourNow == this.moduleHour && this.minuteNow > moduleMinute){
+					this.setEnabled(false);
+					this.setStylePrimaryName("Boton-deshabilitado");
+				}
+			}
+		}else{
 			this.setStylePrimaryName("Boton-ocupado-nulo");
 			if(!this.sobreescribir) {
 				this.setEnabled(false);
 			}
 		}
 		
-		if(unixTime >= this.initialDate){
-			if(this.hourNow > this.moduleHour){
-				this.setEnabled(false);
-				this.setStylePrimaryName("Boton-deshabilitado");
-			}else if(this.hourNow == this.moduleHour && this.minuteNow > this.moduleMinute){
-				this.setEnabled(false);
-				this.setStylePrimaryName("Boton-deshabilitado");
-			}
-		}
-	
 	}
 
 	public String getSala() {
