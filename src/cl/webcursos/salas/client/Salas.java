@@ -257,6 +257,7 @@ public class Salas implements EntryPoint{
 								initialDate,
 								nameRoom,
 								idRoom,
+								size,
 								bookAvaible.get("horaInicio"),
 								bookAvaible.get("horaFin"),								
 								bookAvaible.get("modulonombre"),

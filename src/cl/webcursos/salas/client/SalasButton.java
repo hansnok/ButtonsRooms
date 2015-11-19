@@ -50,7 +50,7 @@ public class SalasButton extends ToggleButton {
 	 * @param downText
 	 * @param handler
 	 */
-	public SalasButton(int initialDate, String sala, int idSala, String horaInicio, String horaFin, String modulo, int idModulo, boolean ocupa, boolean sobree, String upText, String downText, ClickHandler handler) {
+	public SalasButton(int initialDate, String sala, int idSala, String size, String horaInicio, String horaFin, String modulo, int idModulo, boolean ocupa, boolean sobree, String upText, String downText, ClickHandler handler) {
 		super(upText, downText, handler);
 		this.initialDate = initialDate;
 		this.nombreSala = sala;
@@ -67,7 +67,7 @@ public class SalasButton extends ToggleButton {
 		
 		this.popup = new PopupPanel(true);
 		
-		this.popup.setWidget(new HTML("<div>Modulo: "+modulo+"<br>("+horaInicio+"-"+horaFin+")<br><br> Sala:"+sala+"</div>"));
+		this.popup.setWidget(new HTML("<div>Modulo: "+modulo+"<br>("+horaInicio+"-"+horaFin+")<br><br> Sala:"+sala+"<br> Capacidad:"+size+"</div>"));
 		
 		this.addMouseOverHandler(new MouseOverHandler() {			
 			@Override
