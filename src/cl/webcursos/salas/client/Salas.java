@@ -257,6 +257,7 @@ public class Salas implements EntryPoint{
 								initialDate,
 								nameRoom,
 								idRoom,
+								size,
 								bookAvaible.get("horaInicio"),
 								bookAvaible.get("horaFin"),								
 								bookAvaible.get("modulonombre"),
@@ -461,7 +462,7 @@ public class Salas implements EntryPoint{
 						termino=termino+","+Disp.get("termino");
 					}
 						counter = 1;		
-						String param = "&inicio="+inicio+"&termino="+termino+"&nombremodulo="+nombreModulo+"&nombresala="+nombreSalas+"&moduleid="+modulo+"&room="+sala+"&date="+initialDate+"&name="+eventName.getValue()+"&asistentes="+attendeesAmount.getValue()+"&multiply="+advOptions+"&finalDate="+endDate+"&days="+selectDays+"&frequency="+weeklyFrequencyBookings;								
+						String param = "&campusid="+idCampus+"&inicio="+inicio+"&termino="+termino+"&nombremodulo="+nombreModulo+"&nombresala="+nombreSalas+"&moduleid="+modulo+"&room="+sala+"&date="+initialDate+"&name="+eventName.getValue()+"&asistentes="+attendeesAmount.getValue()+"&multiply="+advOptions+"&finalDate="+endDate+"&days="+selectDays+"&frequency="+weeklyFrequencyBookings;								
 						
 						AjaxRequest.ajaxRequest("action=submission"+param, new AsyncCallback<AjaxData>() {
 							@Override
